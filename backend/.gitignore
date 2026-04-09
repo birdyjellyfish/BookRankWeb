@@ -148,7 +148,6 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/
@@ -216,5 +215,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 #for this project
-api/graph.pkl
+graph.pkl
 data.db

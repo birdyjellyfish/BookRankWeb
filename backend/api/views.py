@@ -17,10 +17,16 @@ from rest_framework.exceptions import ValidationError
 from .bookrank import BookRank
 import igraph as ig
 import os
+from dotenv import load_dotenv
+
+
+load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
+graph_filename = os.getenv("GRAPH_FILENAME")
+graph_format = os.getenv("GRAPH_FORMAT")
 
 print('Loading GRAPH object...')
-GRAPH_PATH = os.path.join(settings.BASE_DIR, 'api', 'graph.pkl')
-GRAPH = ig.read(GRAPH_PATH, format='pickle')
+GRAPH_PATH = os.path.join(settings.BASE_DIR, 'data', graph_filename)
+GRAPH = ig.read(GRAPH_PATH, format=graph_format)
 print('GRAPH successfully loaded.')
 
 # Create your views here.

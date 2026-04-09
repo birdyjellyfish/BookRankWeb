@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,10 +78,13 @@ WSGI_APPLICATION = 'BookRankApi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+db_filename = os.getenv('DB_FILENAME')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'data.db',
+        'NAME': BASE_DIR / 'data' / db_filename,
     }
 }
 
@@ -130,6 +135,9 @@ REST_FRAMEWORK = {
 
 
 # CROSS ORIGIN SUPPORT
+
+frontend_url = os.getenv("FRONTEND_URL")
+
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]  # We add your frontend URL here.
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']  # We add your frontend URL here.
+CORS_ALLOWED_ORIGINS = [frontend_url]  # We add your frontend URL here.
+CSRF_TRUSTED_ORIGINS = [frontend_url]  # We add your frontend URL here.
