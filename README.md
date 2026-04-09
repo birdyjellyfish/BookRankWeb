@@ -1,5 +1,5 @@
 # BookRankWeb
-Web interface for BookRank book recommendation engine
+Web interface for [BookRank](https://github.com/birdyjellyfish/BookRank) book recommendation engine. Made with Vue 3, Tailwind CSS, Shadcn-vue and Django REST Framework.
 
 ## Installation
 
