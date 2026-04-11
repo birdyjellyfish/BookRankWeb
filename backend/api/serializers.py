@@ -2,6 +2,16 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.models import User
 from .models import Books, Genres, BookUser
+import requests
+from dotenv import load_dotenv
+import os
+from django.conf import settings
+import time
+
+load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
+
+API_KEY = os.getenv("NLB_APIKEY")
+APP_CODE = os.getenv("NLB_APPCODE")
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,7 +31,72 @@ class BookSerializer(serializers.ModelSerializer):
 
     def get_availability(self, obj):
         libraries = []
+        title = obj.title
+        authors = obj.authors
+        authors = authors.replace(',', '')
+
+        # clean title by removing brackets and text within
+        while '(' in title or ')' in title:
+            open_bracket = title.find('(')
+            close_bracket = title.find(')')
+            title = title[:open_bracket] + title[close_bracket+1:]
+
+        title = title.strip()
+
+        keywords = title.split(' ')
+        # append authors names
+        keywords += authors.split(' ')
+
+        query = ' '.join(keywords)
+
+        print(query)
+
+        brn = None
+
+        try:
+            url = f"https://openweb.nlb.gov.sg/api/v2/Catalogue/SearchTitles?Keywords={query}&MaterialTypes=bks"
+
+            headers = {
+                "X-Api-Key": API_KEY,
+                "X-App-Code": APP_CODE
+            }
+
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                for book in response.json()['titles']:
+                    if title == book['title']:
+                        brn = book['records'][0]['brn']
+                        break
+            
+        except:
+            brn = None
         
+        # check if we got a brn
+        if brn is None:
+            return []
+        time.sleep(2)
+        
+        # else retrieve availability by brn
+        try:
+            url = f"https://openweb.nlb.gov.sg/api/v2/Catalogue/GetAvailabilityInfo?BRN={brn}"
+
+            headers = {
+                "X-Api-Key": API_KEY,
+                "X-App-Code": APP_CODE
+            }
+
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                for item in response.json()['items']:
+                    if item['transactionStatus']['code'] == 'S':
+                        libraries.append(item['location']['name'])
+        except:
+            libraries = []
+        
+        return libraries
+
 
 # returns bookid, authors, title only
 # stripped for BookSearch view and others

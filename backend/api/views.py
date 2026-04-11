@@ -26,7 +26,7 @@ graph_format = os.getenv("GRAPH_FORMAT")
 
 print('Loading GRAPH object...')
 GRAPH_PATH = os.path.join(settings.BASE_DIR, 'data', graph_filename)
-GRAPH = ig.read(GRAPH_PATH, format=graph_format)
+# GRAPH = ig.read(GRAPH_PATH, format=graph_format)
 print('GRAPH successfully loaded.')
 
 # Create your views here.
@@ -44,9 +44,12 @@ class BookPagination(PageNumberPagination):
     max_page_size = 100 # max page_size user can set / will be returned
 
 
-class BookDetail(APIView):
+class BookDetail(generics.RetrieveAPIView):
     """
     Retrieve Book details and availability by its bookid
+    Since we are rate limited by NLB, retrieval of BookDetail may take 2s or longer
+    Availability may be empty either because book is really not available at NLB,
+    or because of rate limit
     """
     queryset = Books.objects.all()
     serializer_class = BookSerializer
