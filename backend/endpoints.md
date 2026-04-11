@@ -11,7 +11,7 @@ API root: /api/
 
 
 #### /api/book/<int:pk> - return details of books
-- [x] GET: bookid -> retrieve exact bookid
+- [x] GET: bookid -> retrieve exact bookid and its book availability
 
 
 #### /api/book/?search=...

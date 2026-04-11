@@ -14,6 +14,7 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
 import { toast } from 'vue-sonner';
+import { useNlbSearch } from '@/composables/nlbSearch';
 
 const bookCoverAPILink = 'https://covers.openlibrary.org/b/id';
 
@@ -42,6 +43,24 @@ watch(() => error.value, (newError) => {
 
 const bookCoverLink = computed(() => {
   return data.value ? `${bookCoverAPILink}/${data.value.coverid}-M.jpg?default=false` : ""
+})
+
+
+// getting the book availability
+const {
+  loading: nlbLoading,
+  availability,
+  error: nlbError,
+  getBookAvailability
+} = useNlbSearch();
+
+watch(() => data.value, (newData) => {
+  if (!newData) {
+    availability.value = [];
+    return;
+  }
+
+  getBookAvailability(newData.isbn, newData.authors, newData.title);
 })
 
 </script>
@@ -144,10 +163,27 @@ const bookCoverLink = computed(() => {
       </div>
     </div>
     
-  <!--   
   <div>
-    Available at NLB libraries
-  </div> -->
+    <p>
+      Book Availability
+    </p>
+    <div v-if="nlbError">
+      {{ nlbError }}
+    </div>
+    <Skeleton v-else-if="nlbLoading" />
+    <div v-else-if="availability.length == 0">
+      Book currently unavailable at NLB.
+    </div>
+    <div v-else class="flex flex-wrap gap-1 my-4">
+      <Badge
+        v-for="lib in availability"
+        :key="lib">
+        {{ lib }}
+      </Badge>
+    </div>
+
+  </div>
+
   </div>
   
 </template>

@@ -44,9 +44,9 @@ class BookPagination(PageNumberPagination):
     max_page_size = 100 # max page_size user can set / will be returned
 
 
-class BookDetail(generics.RetrieveAPIView):
+class BookDetail(APIView):
     """
-    Retrieve Book details by its bookid
+    Retrieve Book details and availability by its bookid
     """
     queryset = Books.objects.all()
     serializer_class = BookSerializer
@@ -72,7 +72,7 @@ class GenreBookList(generics.ListAPIView):
     """
     Retrieve list of books related to given genreid
     """
-    serializer_class = BookSerializer
+    serializer_class = BookLiteSerializer
     pagination_class = BookPagination
 
     def get_queryset(self):

@@ -14,6 +14,7 @@ export interface Book {
   weightedscore: number;
   ratingscount: number;
   genres: Array<Genre>;
+  availability: string[];
 }
 
 export interface BookLite {

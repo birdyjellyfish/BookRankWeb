@@ -13,10 +13,15 @@ class GenreSerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     isbn = serializers.CharField() # typecast isbn to charfield since there are some isbn with X
+    availability = serializers.SerializerMethodField()
 
     class Meta:
         model = Books
-        fields = ["bookid", "goodreadsbookid", "coverid", "isbn", "authors", "title", "averagerating", "weightedscore", "ratingscount", "genres"]
+        fields = ["bookid", "goodreadsbookid", "coverid", "isbn", "authors", "title", "averagerating", "weightedscore", "ratingscount", "genres", "availability"]
+
+    def get_availability(self, obj):
+        libraries = []
+        
 
 # returns bookid, authors, title only
 # stripped for BookSearch view and others
