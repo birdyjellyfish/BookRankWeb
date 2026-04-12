@@ -1,5 +1,5 @@
 from api.models import Books, Genres, BookUser
-from api.serializers import BookSerializer, GenreSerializer, RecoSerializer, UserSerializer, BookUserSerializer, UserAuthSerializer, BookLiteSerializer
+from api.serializers import BookSerializer, GenreSerializer, RecoSerializer, UserSerializer, BookUserSerializer, UserAuthSerializer, BookLiteSerializer, BookAvailabilitySerializer
 from rest_framework import generics, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
@@ -26,7 +26,7 @@ graph_format = os.getenv("GRAPH_FORMAT")
 
 print('Loading GRAPH object...')
 GRAPH_PATH = os.path.join(settings.BASE_DIR, 'data', graph_filename)
-# GRAPH = ig.read(GRAPH_PATH, format=graph_format)
+GRAPH = ig.read(GRAPH_PATH, format=graph_format)
 print('GRAPH successfully loaded.')
 
 # Create your views here.
@@ -46,13 +46,21 @@ class BookPagination(PageNumberPagination):
 
 class BookDetail(generics.RetrieveAPIView):
     """
-    Retrieve Book details and availability by its bookid
+    Retrieve Book details by bookid
+    """
+    queryset = Books.objects.all()
+    serializer_class = BookSerializer
+
+
+class BookAvailability(generics.RetrieveAPIView):
+    """
+    Retrieve Book availability by its bookid
     Since we are rate limited by NLB, retrieval of BookDetail may take 2s or longer
     Availability may be empty either because book is really not available at NLB,
     or because of rate limit
     """
     queryset = Books.objects.all()
-    serializer_class = BookSerializer
+    serializer_class = BookAvailabilitySerializer
 
 
 class GenreDetail(generics.RetrieveAPIView):
