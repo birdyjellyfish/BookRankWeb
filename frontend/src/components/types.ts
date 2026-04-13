@@ -16,6 +16,13 @@ export interface Book {
   genres: Array<Genre>;
 }
 
+export interface BookAvailability {
+  title: string;
+  authors: string;
+  libraries: string[];
+  brn: number;
+}
+
 export interface BookLite {
   bookid: number;
   coverid: number;

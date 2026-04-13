@@ -1,5 +1,5 @@
 from api.models import Books, Genres, BookUser
-from api.serializers import BookSerializer, GenreSerializer, RecoSerializer, UserSerializer, BookUserSerializer, UserAuthSerializer, BookLiteSerializer, BookAvailabilitySerializer
+from api.serializers import BookSerializer, GenreSerializer, RecoSerializer, UserSerializer, BookUserSerializer, UserAuthSerializer, BookLiteSerializer
 from rest_framework import generics, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
@@ -13,6 +13,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.db.utils import IntegrityError
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from django.core.cache import cache
+import requests
+import time
 
 from .bookrank import BookRank
 import igraph as ig
@@ -23,10 +27,12 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 graph_filename = os.getenv("GRAPH_FILENAME")
 graph_format = os.getenv("GRAPH_FORMAT")
+API_KEY = os.getenv("NLB_APIKEY")
+APP_CODE = os.getenv("NLB_APPCODE")
 
 print('Loading GRAPH object...')
 GRAPH_PATH = os.path.join(settings.BASE_DIR, 'data', graph_filename)
-GRAPH = ig.read(GRAPH_PATH, format=graph_format)
+# GRAPH = ig.read(GRAPH_PATH, format=graph_format)
 print('GRAPH successfully loaded.')
 
 # Create your views here.
@@ -52,15 +58,112 @@ class BookDetail(generics.RetrieveAPIView):
     serializer_class = BookSerializer
 
 
-class BookAvailability(generics.RetrieveAPIView):
+class BookAvailability(APIView):
     """
     Retrieve Book availability by its bookid
     Since we are rate limited by NLB, retrieval of BookDetail may take 2s or longer
     Availability may be empty either because book is really not available at NLB,
     or because of rate limit
+
+    404 - not found in NLB system
+    429 - too many nlb requests
+    200 and libraries = [] - all currently on loan
+    200 and libraries != [] - available
     """
-    queryset = Books.objects.all()
-    serializer_class = BookAvailabilitySerializer
+    def get(self, request, pk):
+        book = get_object_or_404(Books, pk=pk)
+
+        # we pk as cache key
+        # all invalid pk will be exited after the above function
+        cache_key = str(pk)
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response({"title": book.title, "authors": book.authors, "libraries": cached["libraries"], "brn": cached["brn"]})
+
+        libraries = set() # there may be repeat libraries in the results
+        title = book.title
+        authors = book.authors
+        authors = authors.replace(',', '')
+
+        # clean title by removing brackets and text within
+        while '(' in title or ')' in title:
+            open_bracket = title.find('(')
+            close_bracket = title.find(')')
+            title = title[:open_bracket] + title[close_bracket+1:]
+
+        title = title.strip()
+
+        keywords = title.split(' ')
+        # append authors names
+        keywords += authors.split(' ')
+
+        query = ' '.join(keywords)
+
+        # now we clean query for reserved chars
+        unreserved = "-._~ "  
+        query = list(query)
+        for i in range(len(query)):
+            if not(query[i].isalnum() or query[i] in unreserved):
+                query[i] = ''
+
+        query = ''.join(query)
+        print(query)
+
+        brn = None
+
+        try:
+            url = f"https://openweb.nlb.gov.sg/api/v2/Catalogue/SearchTitles?Keywords={query}&MaterialTypes=bks"
+
+            headers = {
+                "X-Api-Key": API_KEY,
+                "X-App-Code": APP_CODE
+            }
+
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                for item in response.json()['titles']:
+                    if title == item['title']:
+                        brn = item['records'][0]['brn']
+                        break
+            else:
+                return Response({"title": book.title, "authors": book.authors}, status=response.status_code)
+            
+        except:
+            brn = None
+        
+        # check if we got a brn
+        if brn is None:
+            return Response({"title": book.title, "authors": book.authors}, status=status.HTTP_404_NOT_FOUND)
+        
+        time.sleep(2)
+        # else retrieve availability by brn
+        try:
+            url = f"https://openweb.nlb.gov.sg/api/v2/Catalogue/GetAvailabilityInfo?BRN={brn}"
+
+            headers = {
+                "X-Api-Key": API_KEY,
+                "X-App-Code": APP_CODE
+            }
+
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                for item in response.json()['items']:
+                    if item['transactionStatus']['code'] == 'S':
+                        libraries.add(item['location']['name'])
+            else:
+                return Response({"title": book.title, "authors": book.authors}, status=response.status_code)
+        except:
+            libraries = []
+
+        libraries = list(libraries)
+        cache_item = {"libraries": libraries, "brn": brn}
+
+        cache.set(cache_key, cache_item, timeout=600) 
+        
+        return Response({"title": book.title, "authors": book.authors, "libraries": libraries, "brn": brn})
 
 
 class GenreDetail(generics.RetrieveAPIView):
