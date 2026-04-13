@@ -8,6 +8,7 @@ Web interface for [BookRank](https://github.com/birdyjellyfish/BookRank) book re
 - Sqlite3 database containing Book information for backend (can be generate using [BookRank/data.ipynb](https://github.com/birdyjellyfish/BookRank/blob/main/data.ipynb))
 - igraph file containing BookRank network (can be generated using BookRank [BookRank/data.ipynb](https://github.com/birdyjellyfish/BookRank/blob/main/data.ipynb))
 - Python 3.14 and above
+- NLB Search API Key (for NLB availability functionality - webapp remains functional withouut api key provided)
 
 ### Installing dependencies
 
@@ -24,8 +25,8 @@ Next, in the ```frontend``` folder, install node packages
 ### Setting up the database
 Place your graph and database file in ```/backend/data/```
 
-Edit the .env file in ```/backend/```.
-You can also edit the .env file in ```/frontend/``` (if you want to run django from non-default port 8000)
+Edit the ```.env.example``` in ```/backend/```, and rename it to ```.env```
+Edit the ```.env.example``` file in ```/frontend/``` and rename it to ```.env``` (if you want to run django from non-default port 8000)
 
 Next, setup the database with django requirements (like User tables etc.)
 ```

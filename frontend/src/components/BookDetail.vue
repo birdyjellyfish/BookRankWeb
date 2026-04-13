@@ -71,17 +71,16 @@ async function getNlbAvailability() {
 
   if (statusCode.value == 404) {
     nlbError.value = "Book currently unavailable at NLB.";
-  }
-  else if (statusCode.value == 429) {
+  } else if (statusCode.value == 429) {
     nlbError.value = "Ran out of NLB API requests. Please try again later."
   } else if (error.value) {
     nlbError.value = error.value;
   } else if (data.value?.libraries.length == 0) {
     nlbError.value = "Book fully loaned at NLB. Please try again later."
-  } else {
-    bookAvailability.value = data.value;
   }
 
+  bookAvailability.value = data.value;
+  
   nlbLoading.value = false;
 }
 
@@ -107,6 +106,7 @@ async function getNlbAvailability() {
       </div>
 
     </div>
+    <Skeleton class="h-25 mt-4" />
   </div>  
   <div class="flex flex-col items-start" v-else-if="!error">
     <div class="flex flex-col md:flex-row gap-8">
@@ -188,10 +188,10 @@ async function getNlbAvailability() {
     <Card class="w-full mt-4">
       <CardHeader>
         <CardTitle>
-          Book Availability
+          NLB Availability
         </CardTitle>
         <CardDescription>
-          Find which NLB libraries have the book available
+          Availability may not be fully accurate as BookRank searches by title and author, instead of ISBN or BRN.
         </CardDescription>
         <CardAction>
           <Button @click="getNlbAvailability" variant="outline" size="icon" class="rounded-full">
@@ -202,14 +202,19 @@ async function getNlbAvailability() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div v-if="nlbError">
+        <div>
           {{ nlbError }}
         </div>
-        <div v-else-if="isSearched && bookAvailability?.brn" class="grid">
-          <div class="flex gap-2">
-            <span class="font-semibold">BRN</span>
-            <span>{{ bookAvailability?.brn }}</span>
+        <div v-if="bookAvailability?.brn" class="grid">
+          <div>
+            <span class="font-semibold">BRN </span>
+            <Button variant="link" class="p-0">
+              <a :href="`https://catalogue.nlb.gov.sg/search/card?recordId=${bookAvailability?.brn}`" target="_blank">
+                <span>{{ bookAvailability?.brn }}</span>
+              </a>
+            </Button>
           </div>
+          
           <div class="flex flex-wrap gap-1 my-2">
             <Badge
               v-for="lib in bookAvailability?.libraries"

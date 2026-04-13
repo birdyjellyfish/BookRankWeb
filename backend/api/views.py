@@ -32,7 +32,7 @@ APP_CODE = os.getenv("NLB_APPCODE")
 
 print('Loading GRAPH object...')
 GRAPH_PATH = os.path.join(settings.BASE_DIR, 'data', graph_filename)
-# GRAPH = ig.read(GRAPH_PATH, format=graph_format)
+GRAPH = ig.read(GRAPH_PATH, format=graph_format)
 print('GRAPH successfully loaded.')
 
 # Create your views here.
@@ -108,7 +108,7 @@ class BookAvailability(APIView):
                 query[i] = ''
 
         query = ''.join(query)
-        print(query)
+        # print(query)
 
         brn = None
 
