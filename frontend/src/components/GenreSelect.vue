@@ -85,7 +85,7 @@ onMounted(async () => {
         :class="cn('w-100 md:w-50 justify-between font-normal', selectedGenre === null && 'text-muted-foreground')"
       >
         <Sparkle></Sparkle>
-        <span v-if="value">{{ value }}</span>
+        <span v-if="value" class="font-semibold">{{ value }}</span>
         <span v-else>Select a genre</span>
         <ChevronsUpDownIcon class="ml-2 h-4 w-4 shrink-0" />
       </Button>

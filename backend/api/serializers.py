@@ -2,6 +2,16 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.models import User
 from .models import Books, Genres, BookUser
+import requests
+from dotenv import load_dotenv
+import os
+from django.conf import settings
+import time
+
+load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
+
+API_KEY = os.getenv("NLB_APIKEY")
+APP_CODE = os.getenv("NLB_APPCODE")
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,10 +23,11 @@ class GenreSerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     isbn = serializers.CharField() # typecast isbn to charfield since there are some isbn with X
-
+    
     class Meta:
         model = Books
         fields = ["bookid", "goodreadsbookid", "coverid", "isbn", "authors", "title", "averagerating", "weightedscore", "ratingscount", "genres"]
+
 
 # returns bookid, authors, title only
 # stripped for BookSearch view and others
